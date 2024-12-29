@@ -1,0 +1,37 @@
+# Execution Configuration
+
+# Date for execution (format: YYYYMMDD)
+execution:
+  #date: 'today'
+  date: 'DATE'
+
+  # File paths
+  position_file: 'data/positions'
+  prediction_file: 'data/predictions_DATE.parquet'
+  exclude_symbols: 'data/exclude_symbols.csv'
+
+  # Execution parameters
+  single_order_qty_unit_long: 1
+  single_order_qty_unit_short: 2
+  margin_usage_ratio: .75
+  qty_unit_ratio: .005 # 1 / 40 / 5
+  leverage: 1
+
+  # Ranking column name
+  rank_col: 'linear_compound_factor_5day'
+
+  # Trading conditions
+  long_condition: 'pl.col("rank") <= 20'
+  short_condition: 'pl.col("reverse_rank") <= 10'
+  long_scale_factor: "long_value_scale_7day"
+  short_scale_factor: "short_value_scale_7day"
+  vol_col: "vol_5day_mean"
+  vol_quantile: 0.3
+
+io_connector:
+  io_connector_file: 'logs/io_connector.log'
+
+binance_connector:
+  is_testnet: false
+  api_key: 'empty'
+  secret_key: 'empty'

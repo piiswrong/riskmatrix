@@ -1,0 +1,17 @@
+[project]
+name = "crypto_low_freq"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "arrow>=1.3.0",
+    "jupyter>=1.1.1",
+    "matplotlib>=3.9.3",
+    "numpy>=2.1.3",
+    "pandas>=2.2.3",
+    "polars>=1.16.0",
+    "pyarrow>=18.1.0",
+    "python-binance>=1.0.24",
+    "statsmodels>=0.14.4",
+]

@@ -1,0 +1,3 @@
+pure_day_data_agg_from_hour_sep29.parquet filter=lfs diff=lfs merge=lfs -text
+all_data_1d_boris.parquet filter=lfs diff=lfs merge=lfs -text
+all_data_1d.parquet filter=lfs diff=lfs merge=lfs -text
