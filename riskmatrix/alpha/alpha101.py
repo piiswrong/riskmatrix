@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import polars as pl
 from numpy import abs
 from numpy import log
 from numpy import sign
@@ -184,7 +185,8 @@ def decay_linear(df, period=10):
     return pd.DataFrame(na_lwma, index=df.index, columns=['CLOSE'])  
 # endregion
 
-def compute_alpha101(df, open, high, low, close, volume, returns, vwap):
+def compute_alpha101(df: pl.DataFrame, open, high, low, close, volume, returns, vwap):
+        df = df.to_pandas()
         stock=Alphas(open=df[open], high=df[high], low=df[low], close=df[close], volume=df[volume], returns=df[returns], vwap=df[vwap])
         df['alpha001']=stock.alpha001()
         df['alpha002']=stock.alpha002()
@@ -268,7 +270,7 @@ def compute_alpha101(df, open, high, low, close, volume, returns, vwap):
         df['alpha098']=stock.alpha098()
         df['alpha099']=stock.alpha099()
         df['alpha101']=stock.alpha101()  
-        return df
+        return pl.from_pandas(df).with_columns(pl.col("^alpha.*$").cast(pl.Float64))
 
 class Alphas(object):
     def __init__(self, open, high, low, close, volume, returns, vwap):
