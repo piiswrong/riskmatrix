@@ -101,7 +101,7 @@ def rank(df):
 
 # 缩放时间序列，使其和为1
 def scale(df, k=1):
-    return df.mul(k).div(np.abs(df).sum())
+    return df.mul(k).div(np.abs(df).sum(axis=1), axis=0)
 
 
 # 过去d天最大值的位置
