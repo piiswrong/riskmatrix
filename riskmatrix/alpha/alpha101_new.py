@@ -116,6 +116,11 @@ def ts_argmin(df, window):
 
 # 线性衰减的移动平均加权
 def decay_linear(df, period):
+    weights = np.arange(1, period + 1, dtype=df[df.columns[0]].dtype)
+    weights /= weights.sum()
+    return df.rolling(period).apply(lambda x: np.dot(weights, x))
+
+
     if df.isnull().values.any():
         df.fillna(method="ffill", inplace=True)
         df.fillna(method="bfill", inplace=True)
