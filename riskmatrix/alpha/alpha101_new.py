@@ -116,7 +116,7 @@ def ts_argmin(df, window):
 
 # 线性衰减的移动平均加权
 def decay_linear(df, period):
-    weights = np.arange(1, period + 1, dtype=df[df.columns[0]].dtype)
+    weights = np.arange(1, period + 1, dtype=np.float64)
     weights /= weights.sum()
     return df.rolling(period).apply(lambda x: np.dot(weights, x))
 
@@ -164,8 +164,8 @@ def alpha1(close, returns):
     x = close.copy()
     x[returns < 0] = stddev(returns, 20)
 
-    # alpha = rank(ts_argmax(x ** 2, 5))-0.5
-    # return alpha.fillna(value = 0)
+    alpha = rank(ts_argmax(x ** 2, 5))-0.5
+    return alpha.fillna(value = 0)
 
     ts_argmax_result = x.pow(2).rolling(window=20).apply(np.argmax, raw=True)
     ts_argmax_result = ts_argmax_result.fillna(0)
@@ -307,28 +307,29 @@ def alpha20(Open, high, close, low):
     return alpha.fillna(value=0)
 
 
-# def alpha21(volume,close):
-#     x1 = sma(close, 8) + stddev(close, 8) < sma(close, 2)
-#     x2 = sma(close, 8) - stddev(close, 8) > sma(close, 2)
-#     x3 = sma(volume, 20) / volume < 1
-#     alpha = pd.DataFrame(np.ones_like(close), index = close.index,columns = close.columns)  # TODO, fix bug here
-#     alpha[x1 | x3] = -1 * alpha
-#     return alpha
+def alpha21(volume,close):
+    x1 = sma(close, 8) + stddev(close, 8) < sma(close, 2)
+    x3 = sma(volume, 20) / volume < 1
+    # alpha = pd.DataFrame(np.ones_like(close), index = close.index,columns = close.columns)  # TODO, fix bug here
+    # alpha[x1 | x3] = -1 * alpha
+    return -2 * (x1 | x3) + 1
+
+
 def alpha22(high, volume, close):
     x = correlation(high, volume, 5).replace([-np.inf, np.inf], 0).fillna(value=0)
     alpha = -1 * delta(x, 5) * rank(stddev(close, 20))
     return alpha.fillna(value=0)
 
 
-# def alpha23(high,close, idx, cols):
-#     print (f'high: {high.shape} == {high}')
-#     print (f'idx: {idx.shape} == {idx}')
-#     print (f'cols: {cols.shape} == {cols}')
-#     cols = ['alpha23_value']
-#     x = sma(high, 20) < high
-#     alpha = pd.DataFrame(np.zeros_like(close),index = idx,columns = cols)
-#     alpha[x] = -1 * delta(high, 2).fillna(value = 0)
-#     return alpha
+def alpha23(high,close, idx, cols):
+    print (f'high: {high.shape} == {high}')
+    print (f'idx: {idx.shape} == {idx}')
+    print (f'cols: {cols.shape} == {cols}')
+    cols = ['alpha23_value']
+    x = sma(high, 20) < high
+    return x * -1 * delta(high, 2).fillna(value=0)
+
+
 def alpha24(close):
     x = delta(sma(close, 100), 100) / delay(close, 100) <= 0.05
     alpha = -1 * delta(close, 3)
@@ -584,12 +585,12 @@ def alpha55(high, low, close, volume):
     return alpha
 
 
-def alpha56(returns, cap):
-    # No cap data for now
-    alpha = 0 - (
-        1 * (rank((sma(returns, 10) / sma(sma(returns, 2), 3))) * rank((returns * cap)))
-    )
-    return alpha.fillna(value=0)
+# def alpha56(returns, cap):
+#     # No cap data for now
+#     alpha = 0 - (
+#         1 * (rank((sma(returns, 10) / sma(sma(returns, 2), 3))) * rank((returns * cap)))
+#     )
+#     return alpha.fillna(value=0)
 
 
 def alpha57(close, vwap):
@@ -617,20 +618,20 @@ def alpha62(volume, high, low, Open, vwap):
     return alpha * -1
 
 
-def alpha64(high, low, Open, volume, vwap):
-    adv120 = sma(volume, 120)
-    x1 = rank(
-        correlation(
-            ts_sum(((Open * 0.178404) + (low * (1 - 0.178404))), 13),
-            ts_sum(adv120, 13),
-            17,
-        )
-    )
-    x2 = rank(
-        delta(((((high + low) / 2) * 0.178404) + (vwap * (1 - 0.178404))), 3.69741)
-    )
-    alpha = x1 < x2
-    return alpha * -1
+# def alpha64(high, low, Open, volume, vwap):
+#     adv120 = sma(volume, 120)
+#     x1 = rank(
+#         correlation(
+#             ts_sum(((Open * 0.178404) + (low * (1 - 0.178404))), 13),
+#             ts_sum(adv120, 13),
+#             17,
+#         )
+#     )
+#     x2 = rank(
+#         delta(((((high + low) / 2) * 0.178404) + (vwap * (1 - 0.178404))), 3.69741)
+#     )
+#     alpha = x1 < x2
+#     return alpha * -1
 
 
 def alpha65(volume, vwap, Open):
@@ -654,12 +655,12 @@ def alpha66(vwap, low, Open, high):
     return alpha.fillna(value=0)
 
 
-def alpha68(volume, high, close, low):
-    adv15 = sma(volume, 15)
-    x1 = ts_rank(correlation(rank(high), rank(adv15), 9), 14)
-    x2 = rank(delta(((close * 0.518371) + (low * (1 - 0.518371))), 1.06157))
-    alpha = x1 < x2
-    return alpha * -1
+# def alpha68(volume, high, close, low):
+#     adv15 = sma(volume, 15)
+#     x1 = ts_rank(correlation(rank(high), rank(adv15), 9), 14)
+#     x2 = rank(delta(((close * 0.518371) + (low * (1 - 0.518371))), 1.06157))
+#     alpha = x1 < x2
+#     return alpha * -1
 
 
 def alpha71(volume, close, low, Open, vwap):
@@ -927,49 +928,49 @@ def compute_alpha101(
     }
 
     full_required_columns = {
-        # "alpha1": ["close", "returns"],  # Example, ensure correct keys are here
-        # "alpha2": ["Open", "close", "volume"],
-        # "alpha3": ["Open", "volume"],
-        # "alpha4": ["low"],
-        # "alpha5": ["Open", "vwap", "close"],  # Adjust naming if necessary
+        "alpha1": ["close", "returns"],  # Example, ensure correct keys are here
+        "alpha2": ["Open", "close", "volume"],
+        "alpha3": ["Open", "volume"],
+        "alpha4": ["low"],
+        "alpha5": ["Open", "vwap", "close"],  # Adjust naming if necessary
         "alpha6": ["Open", "volume"],
-        # "alpha7": ["volume", "close"],
-        # "alpha8": ["Open", "returns"],
-        # "alpha9": ["close"],
-        # "alpha10": ["close"],
-        # "alpha11": ["vwap", "close", "volume"],
-        # "alpha12": ["volume", "close"],
+        "alpha7": ["volume", "close"],
+        "alpha8": ["Open", "returns"],
+        "alpha9": ["close"],
+        "alpha10": ["close"],
+        "alpha11": ["vwap", "close", "volume"],
+        "alpha12": ["volume", "close"],
         "alpha13": ["volume", "close"],
-        # "alpha14": ["Open", "volume", "returns"],
+        "alpha14": ["Open", "volume", "returns"],
         "alpha15": ["high", "volume"],
         "alpha16": ["high", "volume"],
-        # "alpha17": ["volume", "close"],
-        # "alpha18": ["close", "Open"],
-        # "alpha19": ["close", "returns"],
-        # "alpha20": ["Open", "high", "close", "low"],
-        # # "alpha21": ["volume", "close"],
-        # "alpha22": ["high", "volume", "close"],
-        # # "alpha23": ["high", "close", "idx", "cols"],
+        "alpha17": ["volume", "close"],
+        "alpha18": ["close", "Open"],
+        "alpha19": ["close", "returns"],
+        "alpha20": ["Open", "high", "close", "low"],
+        "alpha21": ["volume", "close"],
+        "alpha22": ["high", "volume", "close"],
+        "alpha23": ["high", "close", "idx", "cols"],
         "alpha24": ["close"],
         "alpha25": ["volume", "returns", "vwap", "high", "close"],
         "alpha26": ["volume", "high"],
-        # "alpha27": ["volume", "vwap"], # value wrong, TODO, fix it
+        "alpha27": ["volume", "vwap"], # value wrong, TODO, fix it
         "alpha28": ["volume", "high", "low", "close"],
-        # "alpha29": ["close", "returns"],
+        "alpha29": ["close", "returns"],
         "alpha30": ["close", "volume"],
-        # # "alpha31": ["close", "low", "volume"],
-        # "alpha32": ["close", "vwap"]
+        "alpha31": ["close", "low", "volume"],
+        "alpha32": ["close", "vwap"],
         "alpha33": ["Open", "close"],
         "alpha34": ["close", "returns"],
         "alpha35": ["volume", "close", "high", "low", "returns"],
         "alpha36": ["Open", "close", "volume", "returns", "vwap"],
-        # "alpha37": ["Open", "close"],
+        "alpha37": ["Open", "close"],
         "alpha38": ["close", "Open"],
-        # # "alpha39": ["volume", "close", "returns"],  # killed
+        "alpha39": ["volume", "close", "returns"],  # killed
         "alpha40": ["high", "volume"],
-        # "alpha41": ["high", "low", "vwap"],
-        # "alpha42": ["vwap", "close"],
-        # "alpha43": ["volume", "close"],
+        "alpha41": ["high", "low", "vwap"],
+        "alpha42": ["vwap", "close"],
+        "alpha43": ["volume", "close"],
         "alpha44": ["high", "volume"],
         "alpha45": ["close", "volume"],
         "alpha46": ["close"],
@@ -977,37 +978,37 @@ def compute_alpha101(
         "alpha49": ["close"],
         "alpha50": ["volume", "vwap"],
         "alpha51": ["close"],
-        # "alpha52": ["returns", "volume", "low"],
-        # "alpha53": ["close", "high", "low"],
+        "alpha52": ["returns", "volume", "low"],
+        "alpha53": ["close", "high", "low"],
         "alpha54": ["Open", "close", "high", "low"],
         "alpha55": ["high", "low", "close", "volume"],
-        # # "alpha56": ["returns", "cap"], # No cap data
-        # # "alpha57": ["close", "vwap"], # kiled
-        # "alpha60": ["close", "high", "low", "volume"],
-        # "alpha61": ["volume", "vwap"],
+        # "alpha56": ["returns", "cap"], # No cap data
+        "alpha57": ["close", "vwap"], # kiled
+        "alpha60": ["close", "high", "low", "volume"],
+        "alpha61": ["volume", "vwap"],
         "alpha62": ["volume", "high", "low", "Open", "vwap"],
         # "alpha64": ["high", "low", "Open", "volume", "vwap"],
-        # "alpha65": ["volume", "vwap", "Open"],
-        # # "alpha66": ["vwap", "low", "Open", "high"],  # TODO, fix it
+        "alpha65": ["volume", "vwap", "Open"],
+        "alpha66": ["vwap", "low", "Open", "high"],  # TODO, fix it
         # "alpha68": ["volume", "high", "close", "low"],
         "alpha71": ["volume", "close", "low", "Open", "vwap"],
-        # "alpha72": ["volume", "high", "low", "vwap"],
-        # # "alpha73": ["vwap", "Open", "low"], # error, TODO, fix it
+        "alpha72": ["volume", "high", "low", "vwap"],
+        "alpha73": ["vwap", "Open", "low"], # error, TODO, fix it
         "alpha74": ["volume", "close", "high", "vwap"],
-        # "alpha75": ["volume", "vwap", "low"],
-        # "alpha77": ["volume", "high", "low", "vwap"],
-        # "alpha78": ["volume", "low", "vwap"],
+        "alpha75": ["volume", "vwap", "low"],
+        "alpha77": ["volume", "high", "low", "vwap"],
+        "alpha78": ["volume", "low", "vwap"],
         "alpha81": ["volume", "vwap"],
-        # "alpha83": ["high", "low", "close", "volume", "vwap"],
-        # "alpha84": ["vwap", "close"],
-        # "alpha85": ["volume", "high", "close", "low"],
-        # "alpha86": ["volume", "close", "Open", "vwap"],
-        # "alpha88": ["volume", "Open", "low", "high", "close"],
-        # "alpha92": ["volume", "high", "low", "close", "Open"],
+        "alpha83": ["high", "low", "close", "volume", "vwap"],
+        "alpha84": ["vwap", "close"],
+        "alpha85": ["volume", "high", "close", "low"],
+        "alpha86": ["volume", "close", "Open", "vwap"],
+        "alpha88": ["volume", "Open", "low", "high", "close"],
+        "alpha92": ["volume", "high", "low", "close", "Open"],
         "alpha94": ["volume", "vwap"],
-        # "alpha95": ["volume", "high", "low", "Open"],
-        # "alpha96": ["volume", "vwap", "close"],
-        # "alpha98": ["volume", "Open", "vwap"],
+        "alpha95": ["volume", "high", "low", "Open"],
+        "alpha96": ["volume", "vwap", "close"],
+        "alpha98": ["volume", "Open", "vwap"],
         "alpha99": ["volume", "high", "low"],
         "alpha101": ["close", "Open", "high", "low"],
     }
